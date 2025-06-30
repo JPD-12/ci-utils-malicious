@@ -11,11 +11,13 @@ jobs:
         with:
           submodules: true
 
-      - name: Install gaiad
+      - name: Install gaiad binary
         run: |
-          wget https://github.com/cosmos/gaia/releases/download/v15.1.0/gaiad_15.1.0_linux_amd64.tar.gz
-          tar -xvzf gaiad_15.1.0_linux_amd64.tar.gz
-          sudo mv gaiad /usr/local/bin/gaiad
+          curl -LO https://github.com/cosmos/gaia/releases/download/v15.1.0/gaiad-v15.1.0-linux-amd64.tar.gz
+          tar -xzf gaiad-v15.1.0-linux-amd64.tar.gz
+          chmod +x gaiad
+          sudo mv gaiad /usr/local/bin/
+
 
       - name: Add a test key
         run: echo "test mnemonic phrase" | gaiad keys add ci_key --recover --keyring-backend test
