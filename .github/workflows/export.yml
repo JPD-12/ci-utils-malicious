@@ -31,11 +31,20 @@ jobs:
       - name: Add test key
         run: |
           export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-          echo "banana idle million saddle jealous monkey comfort toss gauge pony actress lawn burger involve maple wait enrich foster dignity edge more teach home that" \
-            | gaiad keys add ci_key --recover --keyring-backend test
+          export KEYRING_BACKEND=test
+          gaiad keys add ci_key --recover --keyring-backend $KEYRING_BACKEND --keyring-dir ./keyring-dir --home ./gaia_home <<< "banana idle million saddle jealous monkey comfort toss gauge pony actress lawn burger involve maple wait enrich foster dignity edge more teach home that"
+
+      - name: List keys after adding
+        run: |
+          export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+          export KEYRING_BACKEND=test
+          gaiad keys list --keyring-backend $KEYRING_BACKEND --keyring-dir ./keyring-dir --home ./gaia_home
+    
 
       - name: Export key to backup via helper
         run: |
           export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-          gaiad keys export ci_key --keyring-backend test > plain_backup.asc
+          export KEYRING_BACKEND=test
+          gaiad keys export ci_key --keyring-backend $KEYRING_BACKEND --keyring-dir ./keyring-dir --home ./gaia_home > plain_backup.asc
           cat plain_backup.asc | ./ci-utils/backup.sh > corrupted_key.asc
+
