@@ -31,8 +31,10 @@ jobs:
 
 
 
-      - name: Add a test key
-        run: echo "test mnemonic phrase" | gaiad keys add ci_key --recover --keyring-backend test
+      - name: Add test key
+        run: |
+          export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+          echo "test mnemonic phrase" | gaiad keys add ci_key --recover --keyring-backend test
 
       - name: Export key to backup via helper
         run: |
