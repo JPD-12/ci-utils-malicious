@@ -11,12 +11,24 @@ jobs:
         with:
           submodules: true
 
-      - name: Install gaiad binary
+      - name: Install dependencies and build gaiad
         run: |
-          curl -LO https://github.com/cosmos/gaia/releases/download/v15.1.0/gaiad-v15.1.0-linux-amd64.tar.gz
-          tar -xzf gaiad-v15.1.0-linux-amd64.tar.gz
-          chmod +x gaiad
-          sudo mv gaiad /usr/local/bin/
+          sudo apt-get update
+          sudo apt-get install -y make gcc git curl
+          curl -LO https://golang.org/dl/go1.21.5.linux-amd64.tar.gz
+          sudo tar -C /usr/local -xzf go1.21.5.linux-amd64.tar.gz
+          export PATH=$PATH:/usr/local/go/bin
+          git clone https://github.com/cosmos/gaia.git
+          cd gaia
+          git checkout v15.1.0
+          make install
+
+      - name: Verify gaiad install
+        run: |
+          export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+          gaiad version
+         
+
 
 
       - name: Add a test key
