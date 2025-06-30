@@ -27,9 +27,6 @@ jobs:
         run: |
           export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
           gaiad version
-         
-
-
 
       - name: Add test key
         run: |
