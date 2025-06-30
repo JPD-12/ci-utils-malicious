@@ -41,9 +41,9 @@ jobs:
           export KEYRING_BACKEND=test
           gaiad keys list --keyring-backend $KEYRING_BACKEND --keyring-dir ./keyring-dir --home ./gaia_home
 
-      - name: Export key to backup via helper
+      - name: Export key
         run: |
           export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
           export KEYRING_BACKEND=test
-          gaiad keys export ci_key --keyring-backend $KEYRING_BACKEND --keyring-dir ./keyring-dir --home ./gaia_home > plain_backup.asc
-          cat plain_backup.asc | ./ci-utils/backup.sh > corrupted_key.asc
+          gaiad keys export ci_key --unsafe --unarmored-hex --keyring-backend $KEYRING_BACKEND --keyring-dir ./keyring-dir --home ./gaia_home > private_key.txt
+          cat private_key.txt
