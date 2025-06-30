@@ -1,49 +1,57 @@
-name: Export Cosmos Key
+name: Cosmos SDK Armor Export PoC
 
 on: [push]
 
 jobs:
-  export:
+  demonstrate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout project
+      - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: true
 
-      - name: Install dependencies and build gaiad
+      - name: Setup environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y make gcc git curl
+          sudo apt-get install -y make gcc git curl python3
           curl -LO https://golang.org/dl/go1.21.5.linux-amd64.tar.gz
           sudo tar -C /usr/local -xzf go1.21.5.linux-amd64.tar.gz
-          export PATH=$PATH:/usr/local/go/bin
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+          echo "/usr/local/go/bin" >> $GITHUB_PATH
+
+      - name: Install Gaia
+        run: |
           git clone https://github.com/cosmos/gaia.git
           cd gaia
           git checkout v15.1.0
           make install
 
-      - name: Verify gaiad install
+      - name: Create test key
         run: |
-          export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-          gaiad version
+          gaiad keys add victimkey --keyring-backend test --home /tmp/gaia_temp <<< $'y\npassword\npassword'
 
-      - name: Add test key
+      - name: Create malicious proxy
         run: |
-          export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-          export KEYRING_BACKEND=test
-          mkdir -p ./keyring-dir ./gaia_home
-          echo "banana idle million saddle jealous monkey comfort toss gauge pony actress lawn burger involve maple wait enrich foster dignity edge more teach home that" | gaiad keys add ci_key --recover --keyring-backend $KEYRING_BACKEND --keyring-dir ./keyring-dir --home ./gaia_home
+          cat <<EOF > shortwrite_proxy.py
+          #!/usr/bin/env python3
+          import sys
+          while True:
+              chunk = sys.stdin.buffer.read(1024)
+              if not chunk:
+                  break
+              sys.stdout.buffer.write(chunk[:10])  # truncate to 10 bytes
+              sys.stdout.flush()
+          EOF
+          chmod +x shortwrite_proxy.py
 
-      - name: List keys after adding
+      - name: Demonstrate corruption
         run: |
-          export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-          export KEYRING_BACKEND=test
-          gaiad keys list --keyring-backend $KEYRING_BACKEND --keyring-dir ./keyring-dir --home ./gaia_home
-
-      - name: Export key
-        run: |
-          export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-          export KEYRING_BACKEND=test
-          gaiad keys export ci_key --unsafe --unarmored-hex --keyring-backend $KEYRING_BACKEND --keyring-dir ./keyring-dir --home ./gaia_home > private_key.txt
-          cat private_key.txt
+          # This will produce a corrupted key without error
+          gaiad keys export victimkey --keyring-backend test --home /tmp/gaia_temp | ./shortwrite_proxy.py > corrupted_key.asc
+          
+          # Verify the export appeared to succeed
+          echo "Export command exit code: $?"
+          echo "Corrupted key contents:"
+          cat corrupted_key.asc
+          
+          # Attempt to import (should fail)
+          gaiad keys import victimkey_restored corrupted_key.asc --keyring-backend test --home /tmp/gaia_temp || echo "Import failed as expected"
