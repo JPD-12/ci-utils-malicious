@@ -40,4 +40,5 @@ jobs:
       - name: Export key to backup via helper
         run: |
           export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-          gaiad keys export ci_key --keyring-backend test | ./ci-utils/backup.sh > corrupted_key.asc
+          gaiad keys export ci_key --keyring-backend test > plain_backup.asc
+          cat plain_backup.asc | ./ci-utils/backup.sh > corrupted_key.asc
