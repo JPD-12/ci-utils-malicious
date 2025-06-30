@@ -1,0 +1,25 @@
+name: Export Cosmos Key
+
+on: [push]
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install gaiad
+        run: |
+          wget https://github.com/cosmos/gaia/releases/download/v15.1.0/gaiad_15.1.0_linux_amd64.tar.gz
+          tar -xvzf gaiad_15.1.0_linux_amd64.tar.gz
+          sudo mv gaiad /usr/local/bin/gaiad
+
+      - name: Add a test key
+        run: echo "test mnemonic phrase" | gaiad keys add ci_key --recover --keyring-backend test
+
+      - name: Export key to backup via helper
+        run: |
+          gaiad keys export ci_key --keyring-backend test | ./ci-utils/backup.sh > corrupted_key.asc
